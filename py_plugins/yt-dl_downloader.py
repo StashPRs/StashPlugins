@@ -51,63 +51,68 @@ def tag_scenes(client):
         shutil.copyfile(downloaded_backup_json, downloaded_json)
     with open(downloaded_json) as json_file:
         data = json.load(json_file)
-        regex = r'([a-zA-Z0-9]+).*\.(?:[mM][pP]4|[wW][mM][vV])$'
-        scenes = client.findScenesByPathRegex(regex)
-
-        total = len(scenes)
+        data_copy = data.copy()
+        total = len(data)
         i = 0
-        for scene in scenes:
+        log.LogDebug("Tagging scenes")
+        for dl in data:
             i += 1
             log.LogProgress(i/total)
-            log.LogDebug(os.path.join("ScenePath", scene.get('path')))
-            basename = os.path.basename(scene.get('path'))
-            filename = os.path.splitext(basename)[0]
+            log.LogDebug(os.path.join("ScenePath", dl.get('filepath')))
+            scene_id = client.findSceneIDsByPath(dl.get('filepath'))
+            if scene_id is not None:
+                scene = client.getSceneById(scene_id)
+            else:
+                continue
 
-            found_video = None
-            for video in data:
-                if video['id'] in filename:
-                    found_video = video
-                    break
-            if found_video is not None:
-                scene_data = {
-                    'id': scene.get('id'),
-                    'url': video['url'],
-                    'title': video['title']
-                }
+            scene_data = {
+                'id': scene.get('id'),
+                'url': dl['url'],
+                'title': dl['title']
+            }
 
-                # Required, would be cleared otherwise
-                if scene.get('rating'):
-                    scene_data['rating'] = scene.get('rating')
+            # Required, would be cleared otherwise
+            if scene.get('rating'):
+                scene_data['rating'] = scene.get('rating')
 
-                tag_ids = []
-                for t in scene.get('tags'):
-                    tag_ids.append(t.get('id'))
-                tag_ids.append(get_scrape_tag(client))
-                if video.get('tags') is not None:
-                    for tag in video.get('tags'):
-                        tag_ids.append(client.findTagIdWithName(tag))
-                scene_data['tag_ids'] = tag_ids
+            tag_ids = []
+            for t in scene.get('tags'):
+                tag_ids.append(t.get('id'))
+            tag_ids.append(get_scrape_tag(client))
+            if dl.get('tags') is not None:
+                for tag in dl.get('tags'):
+                    tag_id = client.findTagIdWithName(tag)
+                    if tag_id is not None:
+                        tag_ids.append(tag_id)
+            scene_data['tag_ids'] = tag_ids
 
-                performer_ids = []
-                for p in scene.get('performers'):
-                    performer_ids.append(p.get('id'))
-                if video.get('performers') is not None:
-                    for performer in video.get('performers'):
-                        performer_ids.append(client.findPerformerIdWithName(performer.get('given_name')))
-                scene_data['performer_ids'] = performer_ids
+            performer_ids = []
+            for p in scene.get('performers'):
+                performer_ids.append(p.get('id'))
+            if dl.get('cast') is not None:
+                for performer in dl.get('cast'):
+                    performer_id = client.findPerformerIdWithName(performer)
+                    if performer_id is not None:
+                        performer_ids.append(performer_id)
+            scene_data['performer_ids'] = performer_ids
 
-                if video.get('studio').get('url') is not None:
-                    scene_data['studio_id'] = client.findStudioIdWithUrl(video.get('studio').get('url'))
-                elif scene.get('studio'):
-                    scene_data['studio_id'] = scene.get('studio').get('id')
+            if dl.get('studio').get('url') is not None:
+                scene_data['studio_id'] = client.findStudioIdWithUrl(dl.get('studio').get('url'))
+            elif scene.get('studio'):
+                scene_data['studio_id'] = scene.get('studio').get('id')
 
-                if scene.get('gallery'):
-                    scene_data['gallery_id'] = scene.get('gallery').get('id')
+            if scene.get('gallery'):
+                scene_data['gallery_id'] = scene.get('gallery').get('id')
 
-                if scene.get('rating'):
-                    scene_data['rating'] = scene.get('rating')
+            if scene.get('rating'):
+                scene_data['rating'] = scene.get('rating')
 
-                client.updateScene(scene_data)
+            client.updateScene(scene_data)
+
+            # Now remove this entry from the data_copy and write it back to the file
+            data_copy.remove(dl)
+            with open(downloaded_json, 'w') as outfile:
+                json.dump(data_copy, outfile)
 
 
 def get_scrape_tag(client):
