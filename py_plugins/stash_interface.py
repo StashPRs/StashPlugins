@@ -61,6 +61,47 @@ class StashInterface:
     def callGraphQL(self, query, variables=None):
         return self.__callGraphQL(query, variables)
 
+    def scan_paths(self, paths):
+        try:
+            query = """
+                    mutation($paths: [String!]) {
+                        metadataScan (
+                            input: {
+                                paths: $paths
+                                useFileMetadata: true
+                                scanGenerateSprites: false
+                                scanGeneratePreviews: false
+                                scanGenerateImagePreviews: false
+                                stripFileExtension: false
+                            }
+                        ) 
+                    }
+            """
+
+            variables = {
+                'paths': paths
+            }
+
+            result = self.__callGraphQL(query, variables)
+        except ConnectionError:
+            query = """
+                    mutation {
+                        metadataScan (
+                            input: {
+                                paths: $paths
+                                useFileMetadata: true
+                            }
+                        ) 
+                    }
+            """
+
+            variables = {
+                'paths': paths
+            }
+
+            result = self.__callGraphQL(query, variables)
+        log.LogDebug("ScanResult" + str(result))
+
     def scan_for_new_files(self):
         try:
             query = """
@@ -458,6 +499,30 @@ class StashInterface:
         result = self.__callGraphQL(query, variables)
         return result.get('findScenes').get('scenes')
 
+    def findSceneIDsByPath(self, filepath):
+        query = """
+                query($filepath: String!, $page: Int) {
+                    findScenes(
+                        scene_filter: { path: { modifier: EQUALS, value: $filepath } }
+                        filter: { per_page: 1, page: $page }
+                    ) {
+                        count
+                        scenes {
+                            id
+                        }
+                    }
+                }
+                """
+        variables = {
+            "filepath": filepath
+        }
+        result = self.__callGraphQL(query, variables)
+        res = result.get('findScenes').get('scenes')
+        if res:
+            return res[0]['id']
+        else:
+            return None
+
     # Scrape scene information from url
     def scrapeSceneURL(self, url):
         query = """
@@ -569,7 +634,7 @@ class StashInterface:
         """
 
         variables = {
-            'url': name
+            'name': name
         }
 
         result = self.__callGraphQL(query, variables)
