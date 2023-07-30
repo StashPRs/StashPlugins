@@ -38,7 +38,6 @@ def run(json_input, output):
         client = StashInterface(json_input["server_connection"])
         if mode_arg == "" or mode_arg == "download":
             read_urls_and_download(client)
-            client.scan_for_new_files()
         elif mode_arg == "tag":
             tag_scenes(client)
     except Exception:
@@ -195,7 +194,7 @@ def download(url, downloaded):
             })
         except Exception as e:
             log.LogWarning(str(e))
-    
+
 
 def ytdl_options_to_dict(tup, di):
     for a, b in tup:
@@ -218,10 +217,10 @@ def add_tags(client, tags):
 def add_performers(client, performers):
     if performers is not None:
         for performer in performers:
-            performer_id = client.findPerformerIdWithName(performer.get('given_name'))
+            performer_id = client.findPerformerIdWithName(performer)
 
             if performer_id is None:
-                client.createPerformerByName(performer.get('given_name'))
+                client.createPerformerByName(performer)
                 log.LogInfo('Performer created successfully')
             else:
                 log.LogInfo('Performer already exists')
