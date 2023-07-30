@@ -27,17 +27,17 @@ def add_ph_urls(client):
     count = 0
 
     scenes = client.findScenesByPathRegex(
-        r"(ph[a-z0-9]{13}\.(?:[mM][pP]4|[wW][mM][vV]\S))$"
+        r"PornHub-[a-z0-9]{13}\.(?:[mM][pP]4|[wW][mM][vV]\S)$"
     )
 
     for scene in scenes:
         if scene.get('url') is None or scene.get('url') == "":
             try:
-                ph_id = os.path.splitext(scene.get('path').split('ph')[1])[0]
+                ph_id = os.path.splitext(scene.get('path').split('PornHub-')[1])[0]
             except IndexError:
                 log.LogDebug(f"Error, skipping scene {scene.get('id')}")
                 continue
-            url = f"https://www.pornhub.com/view_video.php?viewkey=ph{ph_id}"
+            url = f"https://www.pornhub.com/view_video.php?viewkey={ph_id}"
 
             scene_data = {
                 'id': scene.get('id'),
