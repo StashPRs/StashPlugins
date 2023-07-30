@@ -229,7 +229,7 @@ def add_studio(client, studio):
         else:
             log.LogInfo('Studio already exists')
     elif studio.get('name') is not None:
-        studio_id = client.findStudioIdWithName(studio.get('name'))
+        studio_id = client.findStudiosWithName(studio.get('name'))
 
         if studio_id is None:
             client.createStudio(studio.get('name'), studio.get('url'))
