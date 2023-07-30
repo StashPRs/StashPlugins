@@ -1,13 +1,4 @@
-try:
-    from yt_dlp import YoutubeDL
-except ImportError:
-    try:
-        from youtube_dl import YoutubeDL
-    except ImportError as e:
-        import traceback
-        traceback.print_exc()
-        print("Error: yt-dlp or youtube_dl not found")
-        exit(1)
+from yt_dlp import YoutubeDL
 import log
 import configparser
 import pathlib
