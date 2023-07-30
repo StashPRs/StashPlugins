@@ -133,12 +133,15 @@ def read_urls_and_download(client):
         log.LogProgress(i/total)
         if check_url_valid(url.strip()):
             download(url.strip(), downloaded)
+            item = downloaded[len(downloaded)-1]
             if config.create_missing_tags:
-                add_tags(client, downloaded[len(downloaded)-1].get('tags'))
+                add_tags(client, item.get('tags'))
             if config.create_missing_performers:
-                add_performers(client, downloaded[len(downloaded)-1].get('performers'))
+                add_performers(client, item.get('cast'))
             if config.create_missing_studios:
-                add_studio(client, downloaded[len(downloaded)-1].get('studio'))
+                add_studio(client, item.get('studio'))
+            filepath = item.get('filepath')
+            client.scan_paths([os.path.dirname(filepath)])
     if os.path.isfile(downloaded_json):
         shutil.move(downloaded_json, downloaded_backup_json)
     with open(downloaded_json, 'w') as outfile:
@@ -187,7 +190,8 @@ def download(url, downloaded):
                     "name": meta.get('uploader_id'),
                     "url": meta.get('uploader_url'),
                 },
-                "performers": meta.get('actors'),
+                "cast": meta.get('cast'),
+                "filepath": meta.get('requested_downloads')[0].get('filepath'),
             })
         except Exception as e:
             log.LogWarning(str(e))
