@@ -18,6 +18,7 @@ import os
 import shutil
 
 from stash_interface import StashInterface
+import config
 
 current_path = str(pathlib.Path(__file__).parent.absolute())
 plugin_folder = str(pathlib.Path(current_path + '/../yt-dl_downloader/').absolute())
@@ -141,9 +142,12 @@ def read_urls_and_download(client):
         log.LogProgress(i/total)
         if check_url_valid(url.strip()):
             download(url.strip(), downloaded)
-            add_tags(client, downloaded[len(downloaded)-1].get('tags'))
-            add_performers(client, downloaded[len(downloaded)-1].get('performers'))
-            add_studio(client, downloaded[len(downloaded)-1].get('studio'))
+            if config.create_missing_tags:
+                add_tags(client, downloaded[len(downloaded)-1].get('tags'))
+            if config.create_missing_performers:
+                add_performers(client, downloaded[len(downloaded)-1].get('performers'))
+            if config.create_missing_studios:
+                add_studio(client, downloaded[len(downloaded)-1].get('studio'))
     if os.path.isfile(downloaded_json):
         shutil.move(downloaded_json, downloaded_backup_json)
     with open(downloaded_json, 'w') as outfile:
