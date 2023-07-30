@@ -1,4 +1,13 @@
-import youtube_dl
+try:
+    from yt_dlp import YoutubeDL
+except ImportError:
+    try:
+        from youtube_dl import YoutubeDL
+    except ImportError as e:
+        import traceback
+        traceback.print_exc()
+        print("Error: yt-dlp or youtube_dl not found")
+        exit(1)
 import log
 import configparser
 import pathlib
@@ -160,10 +169,10 @@ def download(url, downloaded):
     config.read(config_path)
     ytdl_options = {}
     ytdl_options_to_dict(config.items('YTDL_OPTIONS'), ytdl_options)
-    download_dir = str(pathlib.Path(config.get('PATHS', 'downloadDir') + '/%(id)s.%(ext)s').absolute())
+    download_dir = str(pathlib.Path(config.get('PATHS', 'downloadDir') + '/%(extractor)s-%(id)s.%(ext)s').absolute())
     log.LogDebug("Downloading " + url + " to: " + download_dir)
 
-    ydl = youtube_dl.YoutubeDL({
+    ydl = YoutubeDL({
         'outtmpl': download_dir,
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         **ytdl_options,
